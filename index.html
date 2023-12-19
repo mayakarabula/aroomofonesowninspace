@@ -40,14 +40,21 @@
     .hidden {
         display: none;
     }
+
+    #selector {
+        position: fixed;
+        display: none;
+    }
 </style>
+
+<img src="selector.png" id="selector"></img>
 
 <div class="controls">
     <img src="on.png" onclick="toggleGravity()" id="gravity"></img>
     <img src="left.png" onclick="selectLeft()"></img>
     <div id="preview"></div>
     <img src="right.png" onclick="selectRight()"></img>
-    <img src="add.png" onclick="addSelected()"></img>
+    <img src="add.png" onclick="setSelector()"></img>
     <img src="remove.png" onclick="deleteAll()"></img>
     <img src="undo.png" onclick="undo()"></img>
 </div>
@@ -206,17 +213,53 @@
     }
 
     selectRight()
+    let isAdding = false;
 
-    function addSelected() {
+    function setSelector() {
+        const selector = document.querySelector('#selector');
+        document.body.style.cursor = 'none';
+        selector.style.display = 'block';
+        isAdding = true;
+    }
+
+    document.querySelector("body").addEventListener('mousemove', (e) => {
+        if (isAdding) {
+            const selector = document.querySelector('#selector');
+            selector.style.top = `${e.clientY - 25}px`;
+            selector.style.left = `${e.clientX - 25}px`;
+        }
+    });
+
+    document.querySelector("body").addEventListener('mousedown', (e) => {
+        console.log('pressed')
+
+        if (isAdding) {
+            isAdding = false;
+            const selector = document.querySelector('#selector');
+            selector.style.display = 'none';
+            document.body.style.cursor = 'default';
+            const canvas = document.querySelector('canvas');
+
+            addSelected(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+        }
+    });
+
+    function addSelected(x, y) {
         const object = Object.keys(objects)[selectIndex];
-        const newObject = Bodies.rectangle(100, 100, objects[object].width, objects[object].height, {
-            render: {
-                sprite: {
-                    texture: objects[object].texture,
-                }
-            },
-            isStatic: objects[object].isStatic || false
-        });
+        const newObject = Bodies.rectangle(
+            x,
+            y,
+            objects[object].width,
+            objects[object].height, 
+            {
+                render: {
+                    sprite: {
+                        texture: objects[object].texture,
+                    }
+                },
+                isStatic: objects[object].isStatic || false
+            }
+        );
 
         World.add(engine.world, [newObject]);
 
@@ -238,25 +281,6 @@
         const preview = document.querySelector('#preview');
         const object = Object.keys(objects)[selectIndex];
         preview.style.backgroundImage = `url(${objects[object].texture})`;
-    }
-
-    function add() {
-        const randomObject = Object.keys(objects)[Math.floor(Math.random() * Object.keys(objects).length)];
-        const randomX = Math.floor(Math.random() * (canvasWidth - objects[randomObject].width));
-        const randomY = Math.floor(Math.random() * (canvasHeight - objects[randomObject].height));
-        const randomRotation = Math.floor(Math.random() * 360);
-
-        const newObject = Bodies.rectangle(randomX, randomY, objects[randomObject].width, objects[randomObject].height, {
-            render: {
-                sprite: {
-                    texture: objects[randomObject].texture,
-                }
-            },
-            // angle: randomRotation * Math.PI / 180,
-            isStatic: objects[randomObject].isStatic || false
-        });
-
-        World.add(engine.world, [newObject]);
     }
 
     function toggleGravity() {
