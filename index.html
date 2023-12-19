@@ -230,9 +230,18 @@
         }
     });
 
-    document.querySelector("body").addEventListener('mousedown', (e) => {
-        console.log('pressed')
+    document.querySelector("body").addEventListener('touchend', (e) => {
+        if (isAdding) {
+            isAdding = false;
+            const selector = document.querySelector('#selector');
+            selector.style.display = 'none';
+            document.body.style.cursor = 'default';
+            const canvas = document.querySelector('canvas');
+            addSelected(e.changedTouches[0].clientX - canvas.offsetLeft, e.changedTouches[0].clientY - canvas.offsetTop);
+        }
+    });
 
+    document.querySelector("body").addEventListener('mousedown', (e) => {
         if (isAdding) {
             isAdding = false;
             const selector = document.querySelector('#selector');
