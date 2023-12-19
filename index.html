@@ -20,20 +20,33 @@
         background: url("background.png");
     }
 
-    .preview {
-        display: block;
+    #preview {
+        display: inline-block;
+        height: 50px;
+        width: 50px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .controls {
+        text-align: center;
+    }
+
+    .controls img {
+        cursor: pointer;
     }
 </style>
 
-<div class="preview"></div>
-
-<button onclick="add()">
-    Add
-</button>
-
-<button onclick="toggleGravity()">
-    Toggle Gravity
-</button>
+<div class="controls">
+    <img src="on.png" onclick="toggleGravity()" id="gravity"></img>
+    <img src="left.png" onclick="selectLeft()"></img>
+    <div id="preview"></div>
+    <img src="right.png" onclick="selectRight()"></img>
+    <img src="add.png" onclick="addSelected()"></img>
+    <img src="remove.png" onclick="deleteAll()"></img>
+    <img src="undo.png" onclick="undo()"></img>
+</div>
 
 <script>
         // Set canvas size
@@ -139,6 +152,9 @@
 
     const { Engine, Render, World, Bodies, Runner, Mouse, MouseConstraint } = Matter;
 
+    let selectIndex = 0;
+    const addedObjects = [];
+
     const engine = Engine.create();
     const render = Render.create({
         element: document.body,
@@ -175,16 +191,49 @@
     Runner.run(engine);
     Render.run(render);
 
+    function selectLeft() {
+        selectIndex = selectIndex === 0 ? Object.keys(objects).length - 1 : selectIndex - 1;
+        setPreview();
+    }
 
+    function selectRight() {
+        selectIndex = selectIndex === Object.keys(objects).length - 1 ? 0 : selectIndex + 1;
+        setPreview();
+    }
+
+    selectRight()
+
+    function addSelected() {
+        const object = Object.keys(objects)[selectIndex];
+        const newObject = Bodies.rectangle(100, 100, objects[object].width, objects[object].height, {
+            render: {
+                sprite: {
+                    texture: objects[object].texture,
+                }
+            },
+            isStatic: objects[object].isStatic || false
+        });
+
+        World.add(engine.world, [newObject]);
+
+        addedObjects.push(newObject);
+    }
+
+    function undo() {
+        const lastObject = addedObjects.pop();
+        World.remove(engine.world, lastObject);
+    }
+
+    function deleteAll() {
+        addedObjects.forEach(object => {
+            World.remove(engine.world, object);
+        });
+    }
 
     function setPreview() {
-        const preview = document.querySelector('.preview');
-        const randomObject = Object.keys(objects)[Math.floor(Math.random() * Object.keys(objects).length)];
-
-        preview.style.width = randomObject.width;
-        preview.style.height = randomObject.height;
-        preview.style.backgroundImage = `url(${objects[randomObject].texture})`;
-
+        const preview = document.querySelector('#preview');
+        const object = Object.keys(objects)[selectIndex];
+        preview.style.backgroundImage = `url(${objects[object].texture})`;
     }
 
     function add() {
@@ -207,6 +256,8 @@
     }
 
     function toggleGravity() {
+        const gravity = document.querySelector('#gravity');
+        gravity.src = engine.world.gravity.y === 0 ? 'on.png' : 'off.png';
         engine.world.gravity.y = engine.world.gravity.y === 0 ? 1 : 0;
     }
 
